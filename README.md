@@ -1,4 +1,6 @@
-# GapAnalysis R package
+# GapAnalysis R package (This is an alternative repo just for BOLDER project to run Crop Wild Relatives it is neeeded!)
+______
+# The R package is under development nowadays! (THIS IS NOT THE OFFICIAL REPO!)
 
 ## hot fix for dependency issue with rgeos. 
 - please see worked example in the doc for how to get around the error being thown by the FCSex function 
