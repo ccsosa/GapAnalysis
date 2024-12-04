@@ -31,7 +31,7 @@ ParamTest <- function(Occurrence_data, Raster){
   # 2. Are there occurrences with lat long
   oc <- TRUE %in% stats::complete.cases(Occurrence_data[,c("latitude", "longitude")])
   # 3. if no sdm exists
-  sd <- class(Raster) == "RasterLayer"
+  sd <- class(Raster) == "SpatRaster"
   # fail conditions 1. no occurrences with an SDM
   noOC <- an == FALSE & sd == TRUE
   # 3. if there are coordinates and sdm exists

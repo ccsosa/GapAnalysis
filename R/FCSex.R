@@ -67,12 +67,15 @@ FCSex <- function(Species_list, Occurrence_data, Raster_list, Buffer_distance=50
     stop("Please format the column names in your dataframe as species, latitude, longitude, type")
   }
 
+  if(is.null(Raster_list)){
+    stop("Please add a Raster_list")
+  }
+  
   # Load in ecoregions shp
   if(is.null(Ecoregions_shp) | missing(Ecoregions_shp)){
     if(file.exists(system.file("data/preloaded_data/ecoRegion/tnc_terr_ecoregions.shp",
                                package = "GapAnalysis"))){
-      Ecoregions_shp <- raster::shapefile(system.file("data/preloaded_data/ecoRegion/tnc_terr_ecoregions.shp",
-                                                      package = "GapAnalysis"),encoding = "UTF-8")
+      Ecoregions_shp <- sf::st_read(system.file("data/preloaded_data/ecoRegion/tnc_terr_ecoregions.shp", package = "GapAnalysis"))
     } else {
       stop("Ecoregions file is not available yet. Please run the function GetDatasets() and try again")
     }
