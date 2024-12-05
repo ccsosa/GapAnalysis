@@ -31,7 +31,7 @@ GapAnalysis can be installed as follows
 install.packages("GapAnalysis")
 #Alternative: GitHub
 library(devtools)
-remotes::install_github("CIAT-DAPA/GapAnalysis")
+remotes::install_github("ccsosa/GapAnalysis")
 ```
 A full list of libraries needed for the package is included below.
 
