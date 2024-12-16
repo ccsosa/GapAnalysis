@@ -2,13 +2,6 @@
 ______
 # The R package is under development nowadays! (THIS IS NOT THE OFFICIAL REPO!)
 
-## hot fix for dependency issue with rgeos. 
-- please see worked example in the doc for how to get around the error being thown by the FCSex function 
-```r
-Error in explodePolygons(x, ...) : 
-  package rgeos is needed to relate holes to their corresponding polygons
-```
-This involves directly source a few files from this repo to replace the functions use in gapanalysis. 
 #### changes 
 gbuffer has been revamped to use terra. This still returns a sp object so it's not package wide alternation. 
 
