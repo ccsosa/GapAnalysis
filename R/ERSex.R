@@ -28,16 +28,17 @@
 #' Cucurbita_splist <- unique(CucurbitaData$species)
 #' ## Obtaining rasterList object. ##
 #' data(CucurbitaRasters)
-#' CucurbitaRasters <- raster::unstack(CucurbitaRasters)
+#' CucurbitaRasters <- terra::rast(CucurbitaRasters)
 #' ##Obtaining ecoregions shapefile
 #' data(ecoregions)
+#' ecoregions <- sf::st_as_sf(ecoregions)
 #' #Running ERSex
 #' ERSex_df <- ERSex(Species_list = Cucurbita_splist,
 #'                     Occurrence_data = CucurbitaData,
 #'                     Raster_list = CucurbitaRasters,
 #'                     Buffer_distance = 50000,
 #'                     Ecoregions_shp=ecoregions,
-#'                     Gap_Map=FALSE)
+#'                     Gap_Map=T)
 #'
 #' @references
 #'
@@ -47,10 +48,9 @@
 #'
 #'
 #' @export
-#' @importFrom raster shapefile rasterToPoints crs projection
+#' @importFrom terra nlyr crs rasterize as.points
 #' @importFrom fasterize fasterize
-#' @importFrom sp coordinates proj4string SpatialPoints over CRS
-#' @importFrom sf st_as_sf
+#' @importFrom sf st_read sf_use_s2 st_as_sf st_set_crs st_intersects st_as_sf
 
 
 ERSex <- function(Species_list,Occurrence_data, Raster_list, Buffer_distance=50000,Ecoregions_shp=NULL,Gap_Map=FALSE){
@@ -108,7 +108,9 @@ ERSex <- function(Species_list,Occurrence_data, Raster_list, Buffer_distance=500
     Ecoregions_shp <- Ecoregions_shp
   }
 
-  Ecoregions_shp <- sf::as_Spatial(Ecoregions_shp)
+  #Use this to ensure polygons use planar coords
+  sf::sf_use_s2(FALSE)
+  #Ecoregions_shp <- sf::as_Spatial(Ecoregions_shp)
   
   if(isTRUE(Gap_Map)){
     GapMapEx_list <- list()
@@ -121,7 +123,6 @@ ERSex <- function(Species_list,Occurrence_data, Raster_list, Buffer_distance=500
 
   # loop through all species calculate ERSex and produce map
   for(i in seq_len(length(Species_list))){
-  i <-1
     speciesOcc <- Occurrence_data[which(Occurrence_data$species==Species_list[i]),]
 
     if(length(speciesOcc$type == "G") == 0){
@@ -179,33 +180,49 @@ ERSex <- function(Species_list,Occurrence_data, Raster_list, Buffer_distance=500
         buffer_rs <- buffer_rs * SdmMask
         buffer_list[[i]] <- buffer_rs
         names(buffer_list[[i]]) <- Species_list[i]
+        #using buffer as polygons
         gPoints <- sf::st_as_sf(terra::as.points(buffer_rs))
         # extract values from ecoregions to points
         #suppressWarnings(
-        gPoints <- st_set_crs(gPoints,st_crs(Ecoregions_shp))
-        gPoints <- as(gPoints, "Spatial")
-          #terra::crs(gPoints) <- sf::st_crs(Ecoregions_shp)
-          #)
+        gPoints <- sf::st_set_crs(gPoints,"+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+        #terra::crs(gPoints) <- sf::st_crs(Ecoregions_shp)
 
-        ecoValsG <- suppressWarnings(sp::over(x = gPoints, y = Ecoregions_shp))
+        #Intersecting points and polygons
+        ecoValsG <- sf::st_intersects(gPoints, Ecoregions_shp)
+        #Obtaining ecoregions intersected
+        ecoValsG <- unique(unlist(ecoValsG))
+        ecoValsG <- Ecoregions_shp[ecoValsG,]
         ecoValsG <- data.frame(ECO_ID_U=(unique(ecoValsG[,1])))
-        ecoValsG <- ecoValsG[which(!is.na(ecoValsG) & ecoValsG>0),]
+        #removing shp geometry
+        ecoValsG[,2] <- NULL
+        #ecoValsG <- ecoValsG[which(!is.na(ecoValsG) & ecoValsG>0),]
 
         # extract values from ecoregion to predicted presences points
-        predictedPresence <- as(terra::as.points(SdmMask),"Spatial")
+        predictedPresence <- sf::st_as_sf(terra::as.points(SdmMask))#as(terra::as.points(SdmMask),"Spatial")
         #sp::CRS(predictedPresence) <- sf::st_crs(Ecoregions_shp)
-        ecoVals <- suppressWarnings(sp::over(x = predictedPresence, y = Ecoregions_shp))
+        #ecoVals <- suppressWarnings(sp::over(x = predictedPresence, y = Ecoregions_shp))
+        #intersecting points and polygons
+        ecoVals <- sf::st_intersects(predictedPresence, Ecoregions_shp)
+        ecoVals <- unique(unlist(ecoVals))
+        ecoVals <- Ecoregions_shp[ecoVals,]
         ecoVals <- data.frame(ECO_ID_U=(unique(ecoVals[,1])))
-        ecoVals <- ecoVals[which(!is.na(ecoVals) & ecoVals>0),]
+        #removing geometry
+        ecoVals[,2] <- NULL
+        #ecoVals <- data.frame(ECO_ID_U=(unique(ecoVals[,1])))
+        #ecoVals <- ecoVals[which(!is.na(ecoVals) & ecoVals>0),]
 
         #calculate ERSex
-        ERSex <- min(c(100, (length(ecoValsG)/length(ecoVals))*100))
+        ERSex <- min(c(100, (length(as.numeric(ecoValsG[,1]))/length(as.numeric(ecoVals[,1])))*100))
         # assign values to df
         df$species[i] <- as.character(Species_list[i])
         df$ERSex[i] <- ERSex
 
         # number of ecoregions present in model
         if(isTRUE(Gap_Map)){
+          #ensuring the data format is accurate to find the ecosystems gaps
+          ecoVals <- as.character(ecoVals[,1])
+          ecoValsG <- as.character(ecoValsG[,1])
+          
           message(paste0("Calculating ERSex gap map for ",as.character(Species_list[i])),"\n")
 
           # ERSex Gap Map

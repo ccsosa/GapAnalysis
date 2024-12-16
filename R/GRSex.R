@@ -27,7 +27,7 @@
 #' Cucurbita_splist <- unique(CucurbitaData$species)
 #' ## Obtaining rasterList object. ##
 #' data(CucurbitaRasters)
-#' CucurbitaRasters <- raster::unstack(CucurbitaRasters)
+#' CucurbitaRasters <- terra::rast(CucurbitaRasters)
 #' #Running GRSex
 #' GRSex_df <- GRSex(Species_list = Cucurbita_splist,
 #'                     Occurrence_data = CucurbitaData,
@@ -40,10 +40,9 @@
 #' Khoury et al. (2019) Ecological Indicators 98:420-429. doi: 10.1016/j.ecolind.2018.11.016
 #'
 #' @export
-#' @importFrom sp coordinates proj4string SpatialPoints over CRS
+#' @importFrom terra crs nlyr rasterize expanse
 #' @importFrom stats median
-#' @importFrom fasterize fasterize
-#' @importFrom raster overlay crop raster extent ncell projection
+#' @importFrom sf
 
 
 
