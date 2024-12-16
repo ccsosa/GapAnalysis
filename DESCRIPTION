@@ -27,6 +27,7 @@ Depends:
 Imports:
   base (>= 3.5),
   utils (>= 3.5),
+  terra, 
   data.table,
   sp (>= 1.4.1),
   tmap (>= 2.3),
@@ -44,4 +45,4 @@ Suggests:
 License: GPL-3
 LazyData: true
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2
